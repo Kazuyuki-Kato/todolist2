@@ -85,7 +85,7 @@ const useTodoState = () => {
   };
   const updateItem = (newItem: TodoItem) => {
     setTodoItems(
-      todoItems.map((item) => (item.id === newItem.id ? newItem : item))
+      todoItems.map((item) => (item.id === newItem.id ? newItem : item)),
     );
   };
   const deleteItem = (id: number) => {
@@ -96,7 +96,7 @@ const useTodoState = () => {
 
 /** アプリケーション本体となるReactコンポーネント。 */
 export default function App() {
-  const [todoItems, createItem, upadateItem, deleteItem] = useTodoState();
+  const [todoItems, createItem, updateItem, deleteItem] = useTodoState();
   const [keyword, setKeyword] = useState("");
   const [showingDone, setShowingDone] = useState(true);
 
@@ -133,7 +133,7 @@ export default function App() {
               onCheck={(checked) => {
                 updateItem({ ...item, done: checked });
               }}
-              onDlete={() => deleteItem(item.id)}
+              onDelete={() => deleteItem(item.id)}
             />
           ))}
         </div>
