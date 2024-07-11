@@ -1,36 +1,90 @@
-import { useState } from "react";
+import React, { useState } from "react";
+import "./styles.css";
 
-/** リスト表示の対象となる、個々のToDoを表す型。*/
 export type TodoItem = {
-  /** 表示や操作の対象を識別するために利用する、全ての`TodoItem`の中で一意な値。 */
   id: number;
-  /** ToDoの内容となる文字列。 */
   text: string;
-  /** 完了すると`true`となる。 */
   done: boolean;
+  subtasks?: TodoItem[];
 };
 
 type TodoListItemProps = {
   item: TodoItem;
   onCheck: (checked: boolean) => void;
   onDelete: () => void;
+  onSubtaskAdd: (text: string) => void;
+  onSubtaskUpdate: (subtask: TodoItem) => void;
+  onSubtaskDelete: (subtaskId: number) => void;
+  level?: number;
 };
 
-/** ToDoリストの個々のToDoとなるReactコンポーネント。 */
-function TodoListItem({ item, onCheck, onDelete }: TodoListItemProps) {
+function TodoListItem({
+  item,
+  onCheck,
+  onDelete,
+  onSubtaskAdd,
+  onSubtaskUpdate,
+  onSubtaskDelete,
+  level = 0,
+}: TodoListItemProps) {
+  const [newSubtask, setNewSubtask] = useState("");
+
+  const handleSubtaskUpdate = (updatedSubtask: TodoItem) => {
+    onSubtaskUpdate(updatedSubtask);
+  };
+
   return (
-    <div className="TodoItem">
-      <input
-        type="checkbox"
-        checked={item.done}
-        onChange={(ev) => onCheck(ev.currentTarget.checked)}
-      />
-      <p style={{ textDecoration: item.done ? "line-through" : "none" }}>
-        {item.text}
-      </p>
-      <button className="button-small" onClick={() => onDelete()}>
-        削除
-      </button>
+    <div className={`TodoItem level-${level}`}>
+      <div className="TodoItem-main">
+        <input
+          type="checkbox"
+          checked={item.done}
+          onChange={(ev) => onCheck(ev.currentTarget.checked)}
+        />
+        <span style={{ textDecoration: item.done ? "line-through" : "none" }}>
+          {item.text}
+        </span>
+        <button className="button-small" onClick={() => onDelete()}>
+          削除
+        </button>
+      </div>
+      {item.subtasks && (
+        <div className="Subtasks">
+          {item.subtasks.map((subtask) => (
+            <TodoListItem
+              key={subtask.id}
+              item={subtask}
+              onCheck={(checked) =>
+                handleSubtaskUpdate({ ...subtask, done: checked })
+              }
+              onDelete={() => onSubtaskDelete(subtask.id)}
+              onSubtaskAdd={() => {}}
+              onSubtaskUpdate={handleSubtaskUpdate}
+              onSubtaskDelete={() => {}}
+              level={level + 1}
+            />
+          ))}
+        </div>
+      )}
+      {level === 0 && (
+        <div className="SubtaskForm">
+          <input
+            placeholder="新しいサブタスク"
+            value={newSubtask}
+            onChange={(e) => setNewSubtask(e.target.value)}
+          />
+          <button
+            onClick={() => {
+              if (newSubtask.trim()) {
+                onSubtaskAdd(newSubtask);
+                setNewSubtask("");
+              }
+            }}
+          >
+            サブタスク追加
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -39,18 +93,26 @@ type CreateTodoFormProps = {
   onSubmit: (text: string) => void;
 };
 
-/** 新しくToDoを追加するためのフォームとなるReactコンポーネント。 */
 function CreateTodoForm({ onSubmit }: CreateTodoFormProps) {
   const [text, setText] = useState("");
   return (
     <div className="CreateTodoForm">
       <input
-        placeholder="新しいTodo"
+        placeholder="新しいメインタスク"
         size={60}
         value={text}
         onChange={(ev) => setText(ev.currentTarget.value)}
       />
-      <button onClick={() => onSubmit(text)}>追加</button>
+      <button
+        onClick={() => {
+          if (text.trim()) {
+            onSubmit(text);
+            setText("");
+          }
+        }}
+      >
+        追加
+      </button>
     </div>
   );
 }
@@ -59,44 +121,141 @@ type ValueViewerProps = {
   value: any;
 };
 
-/** `value`の内容を`JSON.stringify`して表示する、動作確認用コンポーネント。 */
 function ValueViewer({ value }: ValueViewerProps) {
   return (
     <pre className="ValueViewer">{JSON.stringify(value, undefined, 2)}</pre>
   );
 }
 
-/** ToDoリストの初期値。 */
 const INITIAL_TODO: TodoItem[] = [
-  { id: 1, text: "todo-item-1", done: false },
-  { id: 2, text: "todo-item-2", done: true },
+  {
+    id: 1,
+    text: "Java Silver学習",
+    done: false,
+    subtasks: [
+      { id: 11, text: "基本文法の復習", done: false },
+      { id: 12, text: "模擬試験の実施", done: false },
+    ],
+  },
+  {
+    id: 2,
+    text: "React学習",
+    done: true,
+    subtasks: [
+      { id: 13, text: "progate", done: false },
+      { id: 14, text: "udemy", done: false },
+      { id: 15, text: "個人アプリ作成", done: false },
+    ],
+  },
+  {
+    id: 3,
+    text: "基本情報学習",
+    done: true,
+    subtasks: [
+      { id: 16, text: "ソフトウェア", done: false },
+      { id: 17, text: "ハードウェア", done: false },
+    ],
+  },
+  {
+    id: 4,
+    text: "AWS学習",
+    done: false,
+    subtasks: [
+      { id: 18, text: "ネットワーク関連のサービス", done: false },
+      { id: 19, text: "コンピューティング関連のサービス", done: false },
+    ],
+  },
 ];
 
-/**
- * ID用途に重複しなさそうな数値を適当に生成する。
- * 今回は適当にUnix Epoch(1970-01-01)からの経過ミリ秒を利用した。
- */
 const generateId = () => Date.now();
 
 const useTodoState = () => {
   const [todoItems, setTodoItems] = useState(INITIAL_TODO);
+
   const createItem = (text: string) => {
     setTodoItems([...todoItems, { id: generateId(), text, done: false }]);
   };
+
   const updateItem = (newItem: TodoItem) => {
     setTodoItems(
       todoItems.map((item) => (item.id === newItem.id ? newItem : item)),
     );
   };
+
   const deleteItem = (id: number) => {
     setTodoItems(todoItems.filter((item) => item.id !== id));
   };
-  return [todoItems, createItem, updateItem, deleteItem] as const;
+
+  const addSubtask = (parentId: number, text: string) => {
+    setTodoItems(
+      todoItems.map((item) =>
+        item.id === parentId
+          ? {
+              ...item,
+              subtasks: [
+                ...(item.subtasks || []),
+                { id: generateId(), text, done: false },
+              ],
+            }
+          : item,
+      ),
+    );
+  };
+
+  const updateSubtask = (parentId: number, updatedSubtask: TodoItem) => {
+    setTodoItems(
+      todoItems.map((item) => {
+        if (item.id === parentId && item.subtasks) {
+          const updatedSubtasks = item.subtasks.map((st) =>
+            st.id === updatedSubtask.id ? updatedSubtask : st,
+          );
+          const allSubtasksDone = updatedSubtasks.every((st) => st.done);
+
+          return {
+            ...item,
+            subtasks: updatedSubtasks,
+            done: allSubtasksDone,
+          };
+        }
+        return item;
+      }),
+    );
+  };
+
+  const deleteSubtask = (parentId: number, subtaskId: number) => {
+    setTodoItems(
+      todoItems.map((item) =>
+        item.id === parentId
+          ? {
+              ...item,
+              subtasks: item.subtasks?.filter((st) => st.id !== subtaskId),
+            }
+          : item,
+      ),
+    );
+  };
+
+  return [
+    todoItems,
+    createItem,
+    updateItem,
+    deleteItem,
+    addSubtask,
+    updateSubtask,
+    deleteSubtask,
+  ] as const;
 };
 
-/** アプリケーション本体となるReactコンポーネント。 */
 export default function App() {
-  const [todoItems, createItem, updateItem, deleteItem] = useTodoState();
+  const [
+    todoItems,
+    createItem,
+    updateItem,
+    deleteItem,
+    addSubtask,
+    updateSubtask,
+    deleteSubtask,
+  ] = useTodoState();
   const [keyword, setKeyword] = useState("");
   const [showingDone, setShowingDone] = useState(true);
 
@@ -107,7 +266,7 @@ export default function App() {
 
   return (
     <div className="App">
-      <h1>ToDo</h1>
+      <h1>学習進捗リスト</h1>
       <div className="App_todo-list-control">
         <input
           placeholder="キーワードフィルタ"
@@ -134,11 +293,14 @@ export default function App() {
                 updateItem({ ...item, done: checked });
               }}
               onDelete={() => deleteItem(item.id)}
+              onSubtaskAdd={(text) => addSubtask(item.id, text)}
+              onSubtaskUpdate={(subtask) => updateSubtask(item.id, subtask)}
+              onSubtaskDelete={(subtaskId) => deleteSubtask(item.id, subtaskId)}
             />
           ))}
         </div>
       )}
-      <CreateTodoForm onSubmit={(text) => createItem(text)} />
+      <CreateTodoForm onSubmit={(text: string) => createItem(text)} />
       <ValueViewer
         value={{ keyword, showingDone, todoItems, filteredTodoItems }}
       />
