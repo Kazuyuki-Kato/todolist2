@@ -83,37 +83,54 @@ label {
 }
 
 .TodoItem {
-  padding: 12px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border: 1px solid #eee;
-  border-radius: 4px;
-  box-shadow: 0 6px 12px #0001;
-  background: #fff;
+  margin-bottom: 5px; /* 間隔を縮小 */
 }
 
-.TodoItem > p {
+.TodoItem-main {
+  display: flex;
+  align-items: center;
+}
+
+.Subtasks {
+  margin-left: 20px;
+  margin-top: 5px; /* サブタスクの上部マージンを追加 */
+}
+
+.level-0 {
+  margin-left: 0;
+}
+
+.level-1 {
+  margin-left: 20px;
+}
+
+.SubtaskForm {
+  margin-left: 20px;
+  margin-top: 5px;
+}
+
+.button-small {
+  margin-left: 10px;
+}
+
+.TodoItem-main input[type="checkbox"] {
+  margin-right: 10px;
+}
+
+.TodoItem-main span {
   flex-grow: 1;
 }
 
-.CreateTodoForm {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.TodoItem-main button {
+  white-space: nowrap;
 }
 
-.ValueViewer {
-  padding: 12px;
-  border: 1px solid #eee;
-  border-radius: 4px;
+/* サブタスク間の間隔を調整 */
+.Subtasks .TodoItem {
+  margin-bottom: 5px;
 }
 
-.ValueViewer::before {
-  content: "ValueViewer";
-  display: block;
-  margin-bottom: 12px;
-  font-size: 80%;
-  font-weight: 700;
-  color: #999;
+/* 最後のサブタスクの下マージンを削除 */
+.Subtasks .TodoItem:last-child {
+  margin-bottom: 0;
 }
